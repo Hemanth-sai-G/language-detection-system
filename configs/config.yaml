@@ -1,0 +1,10 @@
+dataset:
+  path: data/raw/Language Detection.csv
+
+training:
+  test_size: 0.2
+  random_state: 42
+
+features:
+  char_ngram_range: [2, 5]
+  word_ngram_range: [1, 2]
