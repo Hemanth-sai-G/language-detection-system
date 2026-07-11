@@ -1,54 +1,60 @@
 """
-Feature engineering module.
-
-Creates reusable TF-IDF vectorizers.
+Feature engineering module for language detection.
 """
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import FeatureUnion
 
-from src.config import (
-    CHAR_NGRAM_RANGE,
-    WORD_NGRAM_RANGE
-)
+from src.config import CHAR_NGRAM_RANGE, WORD_NGRAM_RANGE
 
 
 class FeatureEngineering:
     """
-    Creates TF-IDF feature extractors.
+    Build reusable TF-IDF feature extractors for text data.
     """
 
     @staticmethod
-    def get_character_vectorizer():
+    def get_character_vectorizer() -> TfidfVectorizer:
         """
-        Character-level TF-IDF.
+        Create the character-level TF-IDF vectorizer.
+
+        Returns:
+            TfidfVectorizer: Configured character n-gram vectorizer.
         """
 
         return TfidfVectorizer(
             analyzer="char",
             ngram_range=CHAR_NGRAM_RANGE,
-            lowercase=True
+            lowercase=True,
         )
 
     @staticmethod
-    def get_word_vectorizer():
+    def get_word_vectorizer() -> TfidfVectorizer:
         """
-        Word-level TF-IDF.
+        Create the word-level TF-IDF vectorizer.
+
+        Returns:
+            TfidfVectorizer: Configured word n-gram vectorizer.
         """
 
         return TfidfVectorizer(
             analyzer="word",
             ngram_range=WORD_NGRAM_RANGE,
-            lowercase=True
+            lowercase=True,
         )
 
     @classmethod
-    def get_combined_features(cls):
+    def get_combined_features(cls) -> FeatureUnion:
         """
-        Combine character and word TF-IDF.
+        Combine character and word TF-IDF extractors.
+
+        Returns:
+            FeatureUnion: Combined feature extraction block.
         """
 
-        return FeatureUnion([
-            ("char", cls.get_character_vectorizer()),
-            ("word", cls.get_word_vectorizer())
-        ])
+        return FeatureUnion(
+            transformer_list=[
+                ("char_tfidf", cls.get_character_vectorizer()),
+                ("word_tfidf", cls.get_word_vectorizer()),
+            ]
+        )

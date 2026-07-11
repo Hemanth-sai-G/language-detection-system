@@ -1,82 +1,46 @@
 """
-Entry point of the ML pipeline.
-
-Phase 1:
-Load dataset
-Preprocess dataset
-Save cleaned dataset
-"""
-
-"""from src.data_loader import DataLoader
-
-from src.preprocess import Preprocessor
-
-
-def main():
-
-    loader = DataLoader()
-
-    dataframe = loader.load_dataset()
-
-    print("\nDataset Loaded Successfully\n")
-
-    print(dataframe.head())
-
-    print()
-
-    processor = Preprocessor()
-
-    cleaned_dataframe = processor.preprocess(dataframe)
-
-    print("\nPreprocessing Completed\n")
-
-    print(cleaned_dataframe.head())
-
-    print()
-
-    print("Clean dataset saved successfully.")
-
-
-if __name__ == "__main__":
-
-    main()"""
-
-"""
-Main entry point.
+Entry point for training the language detection pipeline.
 """
 
 from src.data_loader import DataLoader
-
+from src.evaluator import Evaluator
 from src.preprocess import Preprocessor
+from src.serializer import ModelSerializer
+from src.trainer import Trainer
+from utils.logger import logger
 
-from src.train import Trainer
 
+def main() -> None:
+    """
+    Execute the complete training workflow.
+    """
 
-def main():
+    logger.info("Language detection training pipeline started.")
 
     loader = DataLoader()
-
     dataframe = loader.load_dataset()
 
-    processor = Preprocessor()
-
-    clean_dataframe = processor.preprocess(dataframe)
+    preprocessor = Preprocessor()
+    clean_dataframe = preprocessor.preprocess(dataframe)
 
     trainer = Trainer(clean_dataframe)
+    training_summary = trainer.train()
 
-    results = trainer.train()
+    evaluator = Evaluator(
+        pipeline=training_summary["best_pipeline"],
+        X_test=training_summary["X_test"],
+        y_test=training_summary["y_test"],
+        training_summary=training_summary,
+    )
+    metrics = evaluator.evaluate()
 
-    print("\nModel Comparison\n")
+    pipeline_path = ModelSerializer.save_pipeline(training_summary["best_pipeline"])
+    metrics_path = ModelSerializer.save_metrics(metrics)
 
-    for model, accuracy in results.items():
-
-        print(
-
-            f"{model:<25} : {accuracy:.4f}"
-
-        )
+    logger.info("Training workflow completed successfully.")
+    logger.info("Saved pipeline: %s", pipeline_path)
+    logger.info("Saved metrics: %s", metrics_path)
 
 
 if __name__ == "__main__":
-
     main()
