@@ -7,14 +7,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-from docx import Document
-from PyPDF2 import PdfReader
 from sklearn.pipeline import Pipeline
 
 from src.preprocess import Preprocessor
 from src.serializer import ModelSerializer
+from utils.docx_reader import DOCXReader
+from utils.helpers import read_csv_texts, validate_file_path
 from utils.logger import logger
+from utils.pdf_reader import PDFReader
+from utils.txt_reader import TXTReader
 
 
 class Predictor:
@@ -119,74 +120,6 @@ class Predictor:
 
         return [self.predict_text(text) for text in texts]
 
-    @staticmethod
-    def _read_txt_file(file_path: Path) -> str:
-        """
-        Read plain text content from a TXT file.
-
-        Args:
-            file_path: Path to the TXT file.
-
-        Returns:
-            str: Extracted text.
-        """
-
-        return file_path.read_text(encoding="utf-8").strip()
-
-    @staticmethod
-    def _read_pdf_file(file_path: Path) -> str:
-        """
-        Read text content from a PDF file.
-
-        Args:
-            file_path: Path to the PDF file.
-
-        Returns:
-            str: Extracted text.
-        """
-
-        reader = PdfReader(str(file_path))
-        pages = [page.extract_text() or "" for page in reader.pages]
-
-        return "\n".join(pages).strip()
-
-    @staticmethod
-    def _read_docx_file(file_path: Path) -> str:
-        """
-        Read text content from a DOCX file.
-
-        Args:
-            file_path: Path to the DOCX file.
-
-        Returns:
-            str: Extracted text.
-        """
-
-        document = Document(str(file_path))
-
-        return "\n".join(paragraph.text for paragraph in document.paragraphs).strip()
-
-    @staticmethod
-    def _read_csv_file(file_path: Path) -> list[str]:
-        """
-        Read text entries from a CSV file.
-
-        Args:
-            file_path: Path to the CSV file.
-
-        Returns:
-            list[str]: Text entries for batch prediction.
-        """
-
-        dataframe = pd.read_csv(file_path)
-
-        if "Text" in dataframe.columns:
-            series = dataframe["Text"]
-        else:
-            series = dataframe.iloc[:, 0]
-
-        return series.dropna().astype(str).tolist()
-
     def predict_file(self, file_path: str | Path) -> dict[str, Any]:
         """
         Predict language from a supported file type.
@@ -201,10 +134,7 @@ class Predictor:
             dict[str, Any]: File prediction output.
         """
 
-        path = Path(file_path)
-
-        if not path.exists():
-            raise FileNotFoundError(f"Input file not found: {path}")
+        path = validate_file_path(file_path)
 
         suffix = path.suffix.lower()
         logger.info("Running prediction for file: %s", path)
@@ -213,25 +143,25 @@ class Predictor:
             return {
                 "file_path": str(path),
                 "file_type": "txt",
-                "result": self.predict_text(self._read_txt_file(path)),
+                "result": self.predict_text(TXTReader.read(path)),
             }
 
         if suffix == ".pdf":
             return {
                 "file_path": str(path),
                 "file_type": "pdf",
-                "result": self.predict_text(self._read_pdf_file(path)),
+                "result": self.predict_text(PDFReader.read(path)),
             }
 
         if suffix == ".docx":
             return {
                 "file_path": str(path),
                 "file_type": "docx",
-                "result": self.predict_text(self._read_docx_file(path)),
+                "result": self.predict_text(DOCXReader.read(path)),
             }
 
         if suffix == ".csv":
-            texts = self._read_csv_file(path)
+            texts = read_csv_texts(path)
             return {
                 "file_path": str(path),
                 "file_type": "csv",
