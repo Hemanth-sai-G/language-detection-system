@@ -47,7 +47,14 @@ class ModelSelection:
             "Linear SVC": Pipeline(
                 steps=[
                     ("features", FeatureEngineering.get_combined_features()),
-                    ("classifier", LinearSVC()),
+                    (
+                        "classifier",
+                        LinearSVC(
+                            dual="auto",
+                            max_iter=5000,
+                            random_state=RANDOM_STATE,
+                        ),
+                    ),
                 ]
             ),
         }

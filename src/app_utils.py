@@ -4,7 +4,6 @@ Shared Streamlit application helpers.
 
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -44,8 +43,7 @@ def load_metrics() -> dict[str, Any] | None:
     if not METRICS_FILE.exists():
         return None
 
-    with METRICS_FILE.open("r", encoding="utf-8") as file:
-        return json.load(file)
+    return ModelSerializer.load_metrics(METRICS_FILE)
 
 
 def is_model_available() -> bool:

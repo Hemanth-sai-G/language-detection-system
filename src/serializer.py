@@ -100,3 +100,33 @@ class ModelSerializer:
             json.dump(metrics, file, indent=4, ensure_ascii=False)
 
         return save_path
+
+    @classmethod
+    def load_metrics(
+        cls,
+        input_path: str | Path | None = None,
+    ) -> dict[str, Any]:
+        """
+        Load persisted evaluation metrics from disk.
+
+        Args:
+            input_path: Optional custom metrics path.
+
+        Returns:
+            dict[str, Any]: Loaded metrics dictionary.
+
+        Raises:
+            FileNotFoundError: If the metrics file does not exist.
+        """
+
+        load_path = Path(input_path) if input_path else MODEL_DIR / cls.METRICS_FILENAME
+
+        if not load_path.exists():
+            raise FileNotFoundError(f"Saved metrics not found: {load_path}")
+
+        logger.info("Loading evaluation metrics from %s", load_path)
+
+        with load_path.open("r", encoding="utf-8") as file:
+            metrics = json.load(file)
+
+        return metrics

@@ -17,29 +17,33 @@ def main() -> None:
 
     logger.info("Language detection training pipeline started.")
 
-    loader = DataLoader()
-    dataframe = loader.load_dataset()
+    try:
+        loader = DataLoader()
+        dataframe = loader.load_dataset()
 
-    preprocessor = Preprocessor()
-    clean_dataframe = preprocessor.preprocess(dataframe)
+        preprocessor = Preprocessor()
+        clean_dataframe = preprocessor.preprocess(dataframe)
 
-    trainer = Trainer(clean_dataframe)
-    training_summary = trainer.train()
+        trainer = Trainer(clean_dataframe)
+        training_summary = trainer.train()
 
-    evaluator = Evaluator(
-        pipeline=training_summary["best_pipeline"],
-        X_test=training_summary["X_test"],
-        y_test=training_summary["y_test"],
-        training_summary=training_summary,
-    )
-    metrics = evaluator.evaluate()
+        evaluator = Evaluator(
+            pipeline=training_summary["best_pipeline"],
+            X_test=training_summary["X_test"],
+            y_test=training_summary["y_test"],
+            training_summary=training_summary,
+        )
+        metrics = evaluator.evaluate()
 
-    pipeline_path = ModelSerializer.save_pipeline(training_summary["best_pipeline"])
-    metrics_path = ModelSerializer.save_metrics(metrics)
+        pipeline_path = ModelSerializer.save_pipeline(training_summary["best_pipeline"])
+        metrics_path = ModelSerializer.save_metrics(metrics)
 
-    logger.info("Training workflow completed successfully.")
-    logger.info("Saved pipeline: %s", pipeline_path)
-    logger.info("Saved metrics: %s", metrics_path)
+        logger.info("Training workflow completed successfully.")
+        logger.info("Saved pipeline: %s", pipeline_path)
+        logger.info("Saved metrics: %s", metrics_path)
+    except Exception as error:
+        logger.exception("Training workflow failed: %s", error)
+        raise
 
 
 if __name__ == "__main__":
